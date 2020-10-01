@@ -133,9 +133,22 @@ open class FileDestination: BaseQueuedDestination {
     ///
     /// - Returns:  Nothing
     ///
-    private func closeFile() {
-        logFileHandle?.synchronizeFile()
-        logFileHandle?.closeFile()
+    open func closeFile() {
+        if let handle = logFileHandle {
+            if let logQueue = logQueue {
+                let group = DispatchGroup()
+                group.enter()
+                logQueue.async {
+                    handle.synchronizeFile()
+                    handle.closeFile()
+                    group.leave()
+                }
+                group.wait()        //mjc
+            } else {
+                handle.synchronizeFile()
+                handle.closeFile()
+            }
+        }
         logFileHandle = nil
     }
 
